@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Symbol Clock</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css" rel="stylesheet">
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap");
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+    }
+
+    /* 全体を囲うコンテナー */
+    .container {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      background-image: url('back-ground.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-color: #000;
+      padding: 20px;
+    }
+
+    /* 時計の共通スタイル */
+    .clock {
+      font-family: 'Share Tech Mono', monospace;
+      color: #FFF;
+      text-shadow: 0 0 20px #f00ee5, 0 0 20px #f00ee5, 0 0 20px #f00ee5;
+      line-height: 1.1;
+      text-align: center;
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    /* 日付のスタイル */
+    .clock-date {
+      font-size: 25px;
+    }
+
+    /* 時間のスタイル */
+    .clock-time {
+      font-size: 80px;
+    }
+
+    /* 差分時間のスタイル */
+    .clock-diff {
+      font-size: 90px;
+    }
+
+    .lang-select {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    .lang-select select {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #f00ee5;
+      color: white;
+      padding: 5px 10px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .lang-select select option {
+      background: #000;
+    }
+
+    .lang-select a {
+      color: white;
+      text-decoration: none;
+      margin-left: 10px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .timezone-toggle {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .toggle-btn {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #f00ee5;
+      color: white;
+      padding: 5px 15px;
+      font-family: 'Share Tech Mono', monospace;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .toggle-btn.active {
+      background: #f00ee5;
+      box-shadow: 0 0 10px #f00ee5;
+    }
+
+    .toggle-btn:hover {
+      background: rgba(240, 14, 229, 0.3);
+    }
+
+    .input-container {
+      margin-top: 30px;
+    }
+
+    .input-container input {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #f00ee5;
+      color: white;
+      padding: 10px 15px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 16px;
+      width: 200px;
+      margin-right: 10px;
+      text-align: center;
+    }
+
+    .input-container input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .input-container button {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #f00ee5;
+      color: white;
+      padding: 10px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .input-container button:hover {
+      background: #f00ee5;
+      box-shadow: 0 0 10px #f00ee5;
+    }
+
+    #showClock {
+      margin-top: 30px;
+    }
+
+    #showClock.hidden {
+      visibility: hidden;
+    }
+
+    .d-footer {
+      position: absolute;
+      top: 55px;
+      right: 10px;
+      color: white;
+      font-size: 12px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    a:link, a:visited, a:hover, a:active {
+      color: white;
+    }
+
+    .alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #000;
+      border: 2px solid #f00ee5;
+      color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 30px #f00ee5;
+      z-index: 1000;
+      display: none;
+      font-family: 'Share Tech Mono', monospace;
+      text-align: center;
+    }
+
+    .alert.show {
+      display: block;
+      animation: bounceIn 0.5s;
+    }
+
+    .alert h2 {
+      text-shadow: 0 0 20px #f00ee5;
+      margin-bottom: 20px;
+    }
+
+    .alert button {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #f00ee5;
+      color: white;
+      padding: 10px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .alert button:hover {
+      background: #f00ee5;
+      box-shadow: 0 0 10px #f00ee5;
+    }
+
+    @keyframes bounceIn {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.05);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    /* レスポンシブ対応 */
+    @media screen and (max-width: 768px) {
+      .clock-date {
+        font-size: 4vw;
+      }
+      .clock-time {
+        font-size: 12vw;
+      }
+      .clock-diff {
+        font-size: 10vw;
+      }
+
+      .timezone-toggle {
+        position: static;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+
+      .lang-select {
+        position: static;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .input-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .input-container input {
+        width: 80%;
+        max-width: 250px;
+        margin-right: 0;
+      }
+
+      .input-container button {
+        width: 80%;
+        max-width: 250px;
+      }
+
+      .d-footer {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        top: auto;
+      }
+    }
+
+    @media screen and (max-width: 500px) {
+      .clock-date {
+        font-size: 5vw;
+      }
+      .clock-time {
+        font-size: 16vw;
+      }
+      .clock-diff {
+        font-size: 14vw;
+      }
+
+      .toggle-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+
+      #showClock {
+        padding: 0 20px;
+      }
+
+      .input-container input,
+      .input-container button {
+        width: 90%;
+      }
+    }
+
+    @media screen and (max-width: 380px) {
+      .clock-date {
+        font-size: 6vw;
+      }
+      .clock-time {
+        font-size: 18vw;
+      }
+      .clock-diff {
+        font-size: 16vw;
+        word-break: break-all;
+      }
+
+      .toggle-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="clock">
+      <div class="timezone-toggle">
+        <button class="toggle-btn active" id="jst-btn" onclick="setTimezone('JST')">JST</button>
+        <button class="toggle-btn" id="utc-btn" onclick="setTimezone('UTC')">UTC</button>
+      </div>
+
+      <div class="lang-select">
+        <select id="langSelect" onchange="changeLanguage()">
+          <option value="ja">日本語</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
+      <p class="clock-date" id="clock-date"></p>
+      <p class="clock-time" id="clock-time"></p>
+
+      <div class="input-container">
+        <input type="number" id="blockInput" placeholder="ブロック高を入力">
+        <button onclick="setTargetBlock()">設定</button>
+      </div>
+
+      <div id="showClock" class="hidden">
+        <div class="clock-date" id="blockAnnounce">指定ブロック到達予想時刻</div>
+        <p class="clock-diff" id="clock-diff">-</p>
+        <p class="clock-date"><span id="targetBlockLabel">指定ブロック高</span>: <span id="targetBlock">-</span></p>
+        <p class="clock-date"><span id="currentBlockLabel">現在のブロック高</span>: <span id="currentBlock">-</span></p>
+      </div>
+    </div>
+
+    <div class="d-footer">
+      <strong>開発者: <a href="https://twitter.com/ishidad2" target="_blank">だい</a></strong>
+    </div>
+  </div>
+
+
+  <script src="https://xembook.github.io/nem2-browserify/symbol-sdk-2.0.4.js"></script>
+  <script>
+    // グローバル変数
+    let timezone = 'JST';
+    let language = 'ja';
+    let targetBlockHeight = null;
+    let currentBlockHeight = null;
+    let listener = null;
+    let epochAdjustment = null;
+
+    // 言語設定
+    const translations = {
+      ja: {
+        blockAnnounce: '指定ブロック到達予想時刻',
+        targetBlockLabel: '指定ブロック高',
+        currentBlockLabel: '現在のブロック高',
+        alertTitle: '指定ブロック高に到達しました！！',
+        inputPlaceholder: 'ブロック高を入力',
+        setButton: '設定'
+      },
+      en: {
+        blockAnnounce: 'Estimated Block Arrival Time',
+        targetBlockLabel: 'Target Block Height',
+        currentBlockLabel: 'Current Block Height',
+        alertTitle: 'Target block height reached!!',
+        inputPlaceholder: 'Enter block height',
+        setButton: 'Set'
+      }
+    };
+
+    // URLパラメータを取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const blockParam = urlParams.get('block');
+    const langParam = urlParams.get('lang');
+
+    // 初期設定
+    if (langParam) {
+      language = langParam;
+      document.getElementById('langSelect').value = language;
+    }
+
+    if (blockParam) {
+      targetBlockHeight = parseInt(blockParam);
+      document.getElementById('blockInput').value = blockParam;
+    }
+
+    // Symbol SDK初期化
+    const nem = require("/node_modules/symbol-sdk");
+    const node = "https://dual-1.nodes-xym.work:3001";
+    let blockRepo;
+
+    // 初期アラート表示
+    async function showInitialAlert() {
+      const { value: block } = await Swal.fire({
+        title: language === 'ja' ? "ブロック指定" : "Block Specification",
+        input: "number",
+        allowOutsideClick: false,
+        html: `<span style="color: white">${language === 'ja' ? '到達予想時刻を求めたいブロック高を入力' : 'Enter the block height to calculate arrival time'}</span>`,
+        inputValidator: (value) => {
+          if (!value) {
+            return language === 'ja' ? "ブロック高は必須です。" : "Block height is required."
+          }
+        }
+      });
+
+      if(block) {
+        targetBlockHeight = parseInt(block);
+        document.getElementById('blockInput').value = block;
+        updateURLParams();
+        updateBlockDisplay();
+      }
+    }
+
+    // 初期化関数
+    async function init() {
+      const repositoryFactory = new nem.RepositoryFactoryHttp(node);
+      const nsRepo = repositoryFactory.createNamespaceRepository();
+      blockRepo = repositoryFactory.createBlockRepository();
+      const chainRepo = repositoryFactory.createChainRepository();
+
+      // epochAdjustmentの取得
+      epochAdjustment = await repositoryFactory.getEpochAdjustment().toPromise();
+
+      // 初回のチェーン情報取得
+      const chainInfo = await chainRepo.getChainInfo().toPromise();
+      currentBlockHeight = chainInfo.height.lower;
+
+      // WebSocket接続
+      const wsUrl = node.replace('https', 'wss');
+      const wsEndpoint = wsUrl + "/ws";
+      listener = new nem.Listener(wsEndpoint, nsRepo, WebSocket);
+
+      listener.open().then(() => {
+        console.log('WebSocket connected');
+
+        // 新しいブロックを監視
+        listener.newBlock().subscribe((block) => {
+          currentBlockHeight = block.height.lower;
+          updateBlockDisplay();
+        });
+      });
+
+      if (!targetBlockHeight) {
+        await showInitialAlert();
+      } else {
+        updateBlockDisplay();
+      }
+
+      updateTranslations();
+    }
+
+    // 時計更新関数
+    function updateClock() {
+      const now = new Date();
+      let dateStr, timeStr;
+
+      if (timezone === 'JST') {
+        // ローカル時間をJSTとして表示
+        const jstOffset = 9 * 60; // JST is UTC+9
+        const localOffset = now.getTimezoneOffset();
+        const jstTime = new Date(now.getTime() + (jstOffset + localOffset) * 60000);
+
+        const year = jstTime.getFullYear();
+        const month = String(jstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(jstTime.getDate()).padStart(2, '0');
+        const weekDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][jstTime.getDay()];
+        const hours = String(jstTime.getHours()).padStart(2, '0');
+        const minutes = String(jstTime.getMinutes()).padStart(2, '0');
+        const seconds = String(jstTime.getSeconds()).padStart(2, '0');
+
+        dateStr = `${year}.${month}.${day} ${weekDay}`;
+        timeStr = `${hours}:${minutes}:${seconds}`;
+      } else {
+        // UTC時間を表示
+        const year = now.getUTCFullYear();
+        const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(now.getUTCDate()).padStart(2, '0');
+        const weekDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getUTCDay()];
+        const hours = String(now.getUTCHours()).padStart(2, '0');
+        const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+
+        dateStr = `${year}.${month}.${day} ${weekDay}`;
+        timeStr = `${hours}:${minutes}:${seconds}`;
+      }
+
+      document.getElementById('clock-date').textContent = dateStr;
+      document.getElementById('clock-time').textContent = timeStr;
+    }
+
+    // タイムゾーン切り替え
+    function setTimezone(tz) {
+      timezone = tz;
+      document.getElementById('jst-btn').classList.toggle('active', tz === 'JST');
+      document.getElementById('utc-btn').classList.toggle('active', tz === 'UTC');
+      updateClock();
+      if (targetBlockHeight && currentBlockHeight) {
+        updateBlockDisplay();
+      }
+    }
+
+    // 言語切り替え
+    function changeLanguage() {
+      language = document.getElementById('langSelect').value;
+      updateTranslations();
+      updateURLParams();
+    }
+
+    // 翻訳更新
+    function updateTranslations() {
+      const t = translations[language];
+      const blockAnnounce = document.getElementById('blockAnnounce');
+      const targetBlockLabel = document.getElementById('targetBlockLabel');
+      const currentBlockLabel = document.getElementById('currentBlockLabel');
+      const blockInput = document.getElementById('blockInput');
+      const setButton = document.querySelector('.input-container button');
+
+      if (blockAnnounce) blockAnnounce.textContent = t.blockAnnounce;
+      if (targetBlockLabel) targetBlockLabel.textContent = t.targetBlockLabel;
+      if (currentBlockLabel) currentBlockLabel.textContent = t.currentBlockLabel;
+      if (blockInput) blockInput.placeholder = t.inputPlaceholder;
+      if (setButton) setButton.textContent = t.setButton;
+    }
+
+    // ターゲットブロック設定
+    function setTargetBlock() {
+      const input = document.getElementById('blockInput').value;
+      if (input) {
+        targetBlockHeight = parseInt(input);
+        updateBlockDisplay();
+        updateURLParams();
+      }
+    }
+
+    // URL更新
+    function updateURLParams() {
+      const params = new URLSearchParams();
+      if (targetBlockHeight) {
+        params.set('block', targetBlockHeight);
+      }
+      if (language !== 'ja') {
+        params.set('lang', language);
+      }
+      const newUrl = window.location.pathname + '?' + params.toString();
+      history.replaceState(null, '', newUrl);
+    }
+
+    // ブロック情報表示更新
+    async function updateBlockDisplay() {
+      if (!targetBlockHeight || !currentBlockHeight) return;
+
+      document.getElementById('targetBlock').textContent = targetBlockHeight;
+      document.getElementById('currentBlock').textContent = currentBlockHeight;
+      document.getElementById('showClock').classList.remove('hidden');
+
+      if (currentBlockHeight >= targetBlockHeight) {
+        // 過去のブロック
+        try {
+          const blockInfo = await blockRepo.getBlockByHeight(targetBlockHeight).toPromise();
+          const timestamp = Number(blockInfo.timestamp.toString()) + epochAdjustment * 1000;
+          const formattedTime = formatDateTimeFromTimestamp(timestamp);
+          document.getElementById('clock-diff').textContent = formattedTime;
+
+          if (currentBlockHeight === targetBlockHeight) {
+            showAlert();
+          }
+        } catch (error) {
+          console.error('Failed to get block info:', error);
+        }
+      } else {
+        // 未来のブロック
+        const blockDiff = targetBlockHeight - currentBlockHeight;
+        const secondsToTarget = blockDiff * 30; // 1ブロック約30秒
+        const targetTimestamp = Date.now() + secondsToTarget * 1000;
+        const formattedTime = formatDateTimeFromTimestamp(targetTimestamp);
+        document.getElementById('clock-diff').textContent = formattedTime;
+      }
+    }
+
+    // タイムスタンプから日時フォーマット
+    function formatDateTimeFromTimestamp(timestamp) {
+      const date = new Date(timestamp);
+
+      if (timezone === 'JST') {
+        // JSTで表示
+        const jstOffset = 9 * 60; // JST is UTC+9
+        const localOffset = date.getTimezoneOffset();
+        const jstTime = new Date(date.getTime() + (jstOffset + localOffset) * 60000);
+
+        const year = jstTime.getFullYear();
+        const month = String(jstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(jstTime.getDate()).padStart(2, '0');
+        const weekDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][jstTime.getDay()];
+        const hours = String(jstTime.getHours()).padStart(2, '0');
+        const minutes = String(jstTime.getMinutes()).padStart(2, '0');
+        const seconds = String(jstTime.getSeconds()).padStart(2, '0');
+
+        return `${year}.${month}.${day} ${weekDay} ${hours}:${minutes}:${seconds}`;
+      } else {
+        // UTCで表示
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const weekDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getUTCDay()];
+        const hours = String(date.getUTCHours()).padStart(2, '0');
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+
+        return `${year}.${month}.${day} ${weekDay} ${hours}:${minutes}:${seconds}`;
+      }
+    }
+
+    // 到達アラート表示
+    function showAlert() {
+      Swal.fire({
+        title: language === 'ja' ? "指定ブロック高に到達しました！！" : "Target block height reached!!",
+        showClass: {
+          popup: 'animate__animated animate__bounceInDown'
+        },
+        hideClass: {
+          popup: 'animate__animated animate__fadeOutUp'
+        },
+        showConfirmButton: false,
+        imageUrl: 'dancing_jukebot.gif',
+      });
+    }
+
+    // 初期化実行
+    init();
+
+    // 時計を1秒ごとに更新
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>
